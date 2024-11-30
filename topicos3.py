@@ -1,79 +1,75 @@
 import streamlit as st
 from PyPDF2 import PdfReader
-from sentence_transformers import SentenceTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import os
-from sklearn.neighbors import NearestNeighbors
 
-# Configurações iniciais
-st.set_page_config(page_title="Assistente Conversacional Baseado em LLM", layout="wide")
-st.title("Assistente Conversacional Baseado em LLM")
-st.sidebar.title("Configurações")
+# Configurations
+st.set_page_config(page_title="Conversational Assistant", layout="wide")
+st.title("Conversational Assistant")
+st.sidebar.title("Settings")
 
-# Variáveis Globais
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # Modelo para embeddings
-index = None  # Índice FAISS para busca vetorial
-documents = []  # Armazena os documentos originais
-embeddings = None  # Embeddings dos documentos
+# Global Variables
+documents = []
+vectorizer = None
+doc_vectors = None
 
-# Função para carregar PDFs
-def carregar_pdfs(uploaded_files):
+# Function to Load PDFs
+def load_pdfs(uploaded_files):
     global documents
-    documentos_texto = []
+    pdf_texts = []
     for uploaded_file in uploaded_files:
         try:
             pdf_reader = PdfReader(uploaded_file)
-            texto = ""
+            text = ""
             for page in pdf_reader.pages:
-                texto += page.extract_text()
-            documentos_texto.append(texto)
+                text += page.extract_text()
+            pdf_texts.append(text)
         except Exception as e:
-            st.error(f"Erro ao processar {uploaded_file.name}: {e}")
-    documents.extend(documentos_texto)
-    return documentos_texto
+            st.error(f"Error processing {uploaded_file.name}: {e}")
+    documents.extend(pdf_texts)
+    return pdf_texts
 
-# Initialize NearestNeighbors
-def criar_indice(documentos_texto):
-    global index, embeddings
-    st.info("Gerando embeddings...")
-    embeddings = embedding_model.encode(documentos_texto, convert_to_tensor=False)
-    index = NearestNeighbors(n_neighbors=1, metric='cosine').fit(embeddings)
+# Function to Vectorize Documents
+def vectorize_documents(doc_texts):
+    global vectorizer, doc_vectors
+    st.info("Vectorizing documents...")
+    vectorizer = TfidfVectorizer()
+    doc_vectors = vectorizer.fit_transform(doc_texts)
 
-# Search Function
-def buscar_resposta(pergunta):
-    global index, documents
-    if index is None:
-        st.error("Índice não criado. Faça o upload de documentos primeiro.")
+# Function to Search for an Answer
+def search_answer(question):
+    global vectorizer, doc_vectors
+    if vectorizer is None or doc_vectors is None:
+        st.error("No documents loaded. Please upload documents first.")
         return None
-    st.info("Gerando embedding para a pergunta...")
-    query_embedding = embedding_model.encode([pergunta], convert_to_tensor=False)
-    distances, indices = index.kneighbors(query_embedding)
-    if len(indices) > 0:
-        resposta = documents[indices[0][0]]
-        return resposta
-    else:
-        return "Desculpe, não encontrei uma resposta relevante."
+    st.info("Processing your question...")
+    question_vector = vectorizer.transform([question])
+    similarities = cosine_similarity(question_vector, doc_vectors).flatten()
+    most_similar_idx = similarities.argmax()
+    return documents[most_similar_idx] if similarities[most_similar_idx] > 0 else "No relevant answer found."
 
-# Interface de Upload de Arquivos
-st.sidebar.subheader("1. Carregue Documentos PDF")
-uploaded_files = st.sidebar.file_uploader("Faça upload dos arquivos PDF", type="pdf", accept_multiple_files=True)
-if st.sidebar.button("Processar Documentos"):
+# Sidebar for File Upload
+st.sidebar.subheader("1. Upload PDF Documents")
+uploaded_files = st.sidebar.file_uploader("Upload PDF files", type="pdf", accept_multiple_files=True)
+if st.sidebar.button("Process Documents"):
     if uploaded_files:
-        documentos_texto = carregar_pdfs(uploaded_files)
-        criar_indice(documentos_texto)
-        st.success(f"{len(documentos_texto)} documentos processados com sucesso!")
+        pdf_texts = load_pdfs(uploaded_files)
+        vectorize_documents(pdf_texts)
+        st.success(f"{len(pdf_texts)} documents processed successfully!")
     else:
-        st.warning("Nenhum arquivo carregado.")
+        st.warning("No files uploaded.")
 
-# Interface de Perguntas
-st.subheader("2. Faça sua Pergunta")
-pergunta = st.text_input("Digite sua pergunta:")
-if st.button("Buscar Resposta"):
-    if pergunta:
-        resposta = buscar_resposta(pergunta)
-        st.text_area("Resposta:", resposta, height=200)
+# Question Input
+st.subheader("2. Ask a Question")
+question = st.text_input("Enter your question:")
+if st.button("Get Answer"):
+    if question:
+        answer = search_answer(question)
+        st.text_area("Answer:", answer, height=200)
     else:
-        st.warning("Por favor, insira uma pergunta.")
+        st.warning("Please enter a question.")
 
-# Rodapé
-st.sidebar.info("Assistente Conversacional desenvolvido para a tarefa AS05.")
+# Footer
+st.sidebar.info("Minimal dependencies assistant.")
 
