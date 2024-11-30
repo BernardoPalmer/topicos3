@@ -1,8 +1,8 @@
 import streamlit as st
 from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
-import faiss
 import os
+from sklearn.neighbors import NearestNeighbors
 
 # Configurações iniciais
 st.set_page_config(page_title="Assistente Conversacional Baseado em LLM", layout="wide")
@@ -31,16 +31,14 @@ def carregar_pdfs(uploaded_files):
     documents.extend(documentos_texto)
     return documentos_texto
 
-# Função para criar índice vetorial
+# Initialize NearestNeighbors
 def criar_indice(documentos_texto):
     global index, embeddings
     st.info("Gerando embeddings...")
     embeddings = embedding_model.encode(documentos_texto, convert_to_tensor=False)
-    dimension = embeddings[0].shape[0]
-    index = faiss.IndexFlatL2(dimension)
-    index.add(embeddings)
+    index = NearestNeighbors(n_neighbors=1, metric='cosine').fit(embeddings)
 
-# Função para buscar resposta no índice
+# Search Function
 def buscar_resposta(pergunta):
     global index, documents
     if index is None:
@@ -48,9 +46,9 @@ def buscar_resposta(pergunta):
         return None
     st.info("Gerando embedding para a pergunta...")
     query_embedding = embedding_model.encode([pergunta], convert_to_tensor=False)
-    D, I = index.search(query_embedding, k=1)  # Busca o documento mais próximo
-    if len(I) > 0 and I[0][0] != -1:
-        resposta = documents[I[0][0]]
+    distances, indices = index.kneighbors(query_embedding)
+    if len(indices) > 0:
+        resposta = documents[indices[0][0]]
         return resposta
     else:
         return "Desculpe, não encontrei uma resposta relevante."
