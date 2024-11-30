@@ -8,10 +8,13 @@ st.set_page_config(page_title="Conversational Assistant", layout="wide")
 st.title("Conversational Assistant")
 st.sidebar.title("Settings")
 
-# Global Variables
-documents = []  # Store document texts
-vectorizer = None  # Store the vectorizer
-doc_vectors = None  # Store document vectors
+# Initialize session state variables
+if "documents" not in st.session_state:
+    st.session_state.documents = []
+if "vectorizer" not in st.session_state:
+    st.session_state.vectorizer = None
+if "doc_vectors" not in st.session_state:
+    st.session_state.doc_vectors = None
 
 
 # Function to Load PDFs
@@ -31,23 +34,27 @@ def load_pdfs(uploaded_files):
 
 # Function to Vectorize Documents
 def vectorize_documents(doc_texts):
-    global vectorizer, doc_vectors
     st.info("Vectorizing documents...")
     vectorizer = TfidfVectorizer()
     doc_vectors = vectorizer.fit_transform(doc_texts)
+    st.session_state.vectorizer = vectorizer  # Save to session state
+    st.session_state.doc_vectors = doc_vectors  # Save to session state
 
 
 # Function to Search for an Answer
 def search_answer(question):
-    global vectorizer, doc_vectors
-    if vectorizer is None or doc_vectors is None:
+    if st.session_state.vectorizer is None or st.session_state.doc_vectors is None:
         st.error("No documents processed. Please upload and process documents first.")
         return None
     st.info("Processing your question...")
-    question_vector = vectorizer.transform([question])
-    similarities = cosine_similarity(question_vector, doc_vectors).flatten()
+    question_vector = st.session_state.vectorizer.transform([question])
+    similarities = cosine_similarity(question_vector, st.session_state.doc_vectors).flatten()
     most_similar_idx = similarities.argmax()
-    return documents[most_similar_idx] if similarities[most_similar_idx] > 0 else "No relevant answer found."
+    return (
+        st.session_state.documents[most_similar_idx]
+        if similarities[most_similar_idx] > 0
+        else "No relevant answer found."
+    )
 
 
 # Sidebar for File Upload
@@ -59,9 +66,9 @@ if st.sidebar.button("Process Documents"):
         # Load and process the uploaded files
         pdf_texts = load_pdfs(uploaded_files)
         if pdf_texts:
-            documents.extend(pdf_texts)  # Append to the global documents list
-            vectorize_documents(documents)  # Vectorize the documents
-            st.success(f"{len(documents)} documents processed successfully!")
+            st.session_state.documents.extend(pdf_texts)  # Save documents to session state
+            vectorize_documents(st.session_state.documents)  # Vectorize the documents
+            st.success(f"{len(st.session_state.documents)} documents processed successfully!")
         else:
             st.warning("No valid text extracted from the uploaded files.")
     else:
