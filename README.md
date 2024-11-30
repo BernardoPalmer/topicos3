@@ -15,10 +15,10 @@ Para executar o projeto localmente, certifique-se de ter instalado:
 
 Primeiro, faça o clone do repositório do projeto em sua máquina local:
 
-\`\`\`bash
+```bash
 git clone https://github.com/BernardoPalmer/topicos3.git
 cd topicos3
-\`\`\`
+```
 
 ### 2. Crie um Ambiente Virtual (opcional, mas recomendado)
 
@@ -26,40 +26,40 @@ Crie e ative um ambiente virtual para isolar as dependências do projeto:
 
 #### No Linux/MacOS:
 
-\`\`\`bash
+```bash
 python3 -m venv venv
 source venv/bin/activate
-\`\`\`
+```
 
 #### No Windows:
 
-\`\`\`bash
+```bash
 python -m venv venv
 venv\Scripts\activate
-\`\`\`
+```
 
 ### 3. Instale as Dependências
 
-Instale todas as bibliotecas necessárias listadas no arquivo \`requirements.txt\`:
+Instale todas as bibliotecas necessárias listadas no arquivo `requirements.txt`:
 
-\`\`\`bash
+```bash
 pip install -r requirements.txt
-\`\`\`
+```
 
 ### 4. Execute o Projeto
 
 Inicie o aplicativo utilizando o comando:
 
-\`\`\`bash
+```bash
 streamlit run topicos3.py
-\`\`\`
+```
 
 Este comando abrirá o aplicativo no navegador padrão. Caso não abra automaticamente, acesse o link indicado no terminal (geralmente [http://localhost:8501](http://localhost:8501)).
 
 ## Estrutura do Projeto
 
-- **\`topicos3.py\`**: Código principal da aplicação.
-- **\`requirements.txt\`**: Lista de dependências do projeto.
+- **`topicos3.py`**: Código principal da aplicação.
+- **`requirements.txt`**: Lista de dependências do projeto.
 
 ## Resolução de Problemas
 
@@ -67,17 +67,17 @@ Este comando abrirá o aplicativo no navegador padrão. Caso não abra automatic
 
 Certifique-se de que a versão do Python seja compatível (3.8 ou superior). Caso necessário, atualize o pip com o comando:
 
-\`\`\`bash
+```bash
 pip install --upgrade pip
-\`\`\`
+```
 
 ### Erro ao executar o Streamlit
 
 Certifique-se de que o Streamlit está instalado corretamente. Reinstale com:
 
-\`\`\`bash
+```bash
 pip install streamlit
-\`\`\`
+```
 
 ### Problemas com PDFs
 
