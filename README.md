@@ -46,6 +46,8 @@ Instale todas as bibliotecas necessárias listadas no arquivo `requirements.txt`
 pip install -r requirements.txt
 ```
 
+Instale também streamlit, esse não pode estar no requirements.txt, já que gera um conflito com o StreamlitCloud, onde a aplicação está hospedada.
+
 ### 4. Execute o Projeto
 
 Inicie o aplicativo utilizando o comando:
